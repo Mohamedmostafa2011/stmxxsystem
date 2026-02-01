@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>404 Not Found</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { margin: 0; overflow: hidden; font-family: monospace; background: #000; color: #0f0; }
+        
+        /* 404 LAYER */
+        #layer-404 { background: white; color: #333; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif; }
+        #secret-trigger { cursor: pointer; user-select: none; } 
+
+        /* DASHBOARD LAYER */
+        #dashboard { display: none; height: 100vh; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .big { font-size: 3em; font-weight: bold; margin: 10px 0; }
+        .label { color: #005500; margin-top: 20px; }
+        .time { color: gray; margin-top: 30px; font-size: 0.8em; }
+        
+        /* TERMINAL INPUT */
+        #term-input { background: transparent; border: none; color: #0f0; outline: none; font-family: monospace; font-size: 16px; text-transform: uppercase; text-align: center; width: 100%; display: none;}
+    </style>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+    <!-- 1. FAKE 404 -->
+    <div id="layer-404">
+        <h1>404 Not Found</h1>
+        <hr style="width:200px">
+        <p>nginx/<span id="secret-trigger">1.18.0</span></p>
+    </div>
+
+    <!-- 2. DASHBOARD / LOGIN -->
+    <div id="dashboard">
+        <div id="login-area">
+            <div>ENTER PASSWORD:</div>
+            <input type="text" id="term-input" autocomplete="off">
+        </div>
+
+        <div id="data-area" style="display:none;">
+            <div class="label">BATTERY LEVEL</div>
+            <div id="batt" class="big">--%</div>
+            
+            <div class="label">WIFI NETWORK</div>
+            <div id="wifi" class="big">--</div>
+
+            <div class="time">LAST SEEN: <span id="time">--</span></div>
+        </div>
+    </div>
+
+    <script>
+        // !!! PASTE YOUR REPLIT URL BELOW !!!
+        const socket = io('https://your-spy-brain.replit.app'); 
+
+        // TRIGGER (5 Taps)
+        let taps = 0;
+        document.getElementById('secret-trigger').addEventListener('click', (e) => {
+            e.preventDefault(); taps++;
+            if (taps >= 5) {
+                document.getElementById('layer-404').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'flex';
+                document.getElementById('term-input').style.display = 'block';
+                document.getElementById('term-input').focus();
+            }
+            setTimeout(() => { taps = 0; }, 800);
+        });
+
+        // PASSWORD
+        const input = document.getElementById('term-input');
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                if (input.value.trim() === "init_override_77") {
+                    socket.emit('try_login', input.value.trim());
+                }
+                input.value = '';
+            }
+        });
+
+        // DISPLAY DATA (Even if laptop is off)
+        socket.on('login_success', () => {
+            document.getElementById('login-area').style.display = 'none';
+            document.getElementById('data-area').style.display = 'block';
+        });
+
+        socket.on('dashboard_update', (data) => {
+            document.getElementById('batt').innerText = data.battery;
+            document.getElementById('wifi').innerText = data.wifiName;
+            document.getElementById('time').innerText = data.time;
+        });
+    </script>
+</body>
+</html>
